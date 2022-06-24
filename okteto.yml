@@ -1,0 +1,21 @@
+name: auction-stats
+autocreate: true
+image: golang:1.18.3-bullseye
+command: bash
+securityContext:
+  capabilities:
+    add:
+    - SYS_PTRACE
+volumes:
+- /go/pkg/
+- /root/.cache/go-build/
+sync:
+- .:/usr/src/app
+workdir: /usr/src/app
+environment:
+- KAFKA_HOST=kafka.kafka:9092
+- TOPIC_DEV_CHAT=discord-messages
+- PROJECT=test
+- ORGANIZATION=coflnet
+forward:
+- 8080:8080
