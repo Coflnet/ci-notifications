@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -30,7 +32,7 @@ func writeMessage(c *Config) error {
 	m := kafka.Message{
 		Key:   []byte(key),
 		Value: data,
-		Topic: os.Getenv("TOPIC_DEV_CHAT"),
+		Topic: topic(),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -64,9 +66,40 @@ func writer() (*kafka.Writer, error) {
 }
 
 func message(c *Config) *Message {
+
+	t := time.Now()
 	m := &Message{
-		Message: fmt.Sprintf("project %s in organization %s was updated at %v", c.Project, c.Organization, time.Now()),
+		Message: fmt.Sprintf("%s/%s updated at %s", c.Project, c.Organization, t.Format(time.RFC3339)),
 	}
 
 	return m
+}
+
+func topic() string {
+	s := os.Getenv("SUCCESS")
+	if s == "" {
+		log.Panic().Msgf("SUCCESS env var is not set")
+	}
+
+	success, err := strconv.ParseBool(s)
+
+	if err != nil {
+		log.Panic().Err(err).Msgf("SUCCESS env var is not a boolean")
+	}
+
+	if success {
+		res := os.Getenv("TOPIC_DEV_CHAT")
+		if res == "" {
+			log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
+		}
+
+		return res
+	}
+
+	res := os.Getenv("TOPIC_DEV_SPAM_CHAT")
+	if res == "" {
+		log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
+	}
+
+	return os.Getenv("TOPIC_DEV_SPAM_CHAT")
 }
