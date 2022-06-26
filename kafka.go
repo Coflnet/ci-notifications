@@ -67,27 +67,23 @@ func writer() (*kafka.Writer, error) {
 
 func message(c *Config) *Message {
 
-	t := time.Now()
+	prefix := "[SUCCESS]"
+	if !pipelineSuccessful() {
+		prefix = "[FAILURE]"
+	}
+
+	text := fmt.Sprintf("%s %s/%s updated", prefix, c.Project, c.Organization)
+
 	m := &Message{
-		Message: fmt.Sprintf("%s/%s updated at %s", c.Project, c.Organization, t.Format(time.RFC3339)),
+		Message: text,
 	}
 
 	return m
 }
 
 func topic() string {
-	s := os.Getenv("SUCCESS")
-	if s == "" {
-		log.Panic().Msgf("SUCCESS env var is not set")
-	}
 
-	success, err := strconv.ParseBool(s)
-
-	if err != nil {
-		log.Panic().Err(err).Msgf("SUCCESS env var is not a boolean")
-	}
-
-	if success {
+	if pipelineSuccessful() {
 		res := os.Getenv("TOPIC_DEV_CHAT")
 		if res == "" {
 			log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
@@ -102,4 +98,19 @@ func topic() string {
 	}
 
 	return os.Getenv("TOPIC_DEV_SPAM_CHAT")
+}
+
+func pipelineSuccessful() bool {
+	s := os.Getenv("SUCCESS")
+	if s == "" {
+		log.Panic().Msgf("SUCCESS env var is not set")
+	}
+
+	success, err := strconv.ParseBool(s)
+
+	if err != nil {
+		log.Panic().Err(err).Msgf("SUCCESS env var is not a boolean")
+	}
+
+	return success
 }
