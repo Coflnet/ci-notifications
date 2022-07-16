@@ -84,7 +84,7 @@ func message(c *Config) *Message {
 func topic() string {
 
 	if pipelineSuccessful() {
-		res := os.Getenv("TOPIC_DEV_CHAT")
+		res := os.Getenv("TOPIC_DEV_SPAM_CHAT")
 		if res == "" {
 			log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
 		}
@@ -92,7 +92,7 @@ func topic() string {
 		return res
 	}
 
-	res := os.Getenv("TOPIC_DEV_SPAM_CHAT")
+	res := os.Getenv("TOPIC_DEV_CHAT")
 	if res == "" {
 		log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
 	}
