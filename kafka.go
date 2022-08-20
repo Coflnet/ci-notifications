@@ -103,7 +103,7 @@ func topic() string {
 		log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
 	}
 
-	return os.Getenv("TOPIC_DEV_SPAM_CHAT")
+	return res
 }
 
 func pipelineSuccessful() bool {
