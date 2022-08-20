@@ -13,7 +13,13 @@ import (
 
 type Message struct {
 	Message string
+	Channel string
 }
+
+const (
+	CI_SUCCESS_CHANNEL = "ci-success"
+	CI_FAILURE_CHANNEL = "ci-failure"
+)
 
 func writeMessage(c *Config) error {
 	w, err := writer()
@@ -76,21 +82,20 @@ func message(c *Config) *Message {
 
 	m := &Message{
 		Message: text,
+		Channel: channel(),
 	}
 
 	return m
 }
 
-func topic() string {
-
+func channel() string {
 	if pipelineSuccessful() {
-		res := os.Getenv("TOPIC_DEV_SPAM_CHAT")
-		if res == "" {
-			log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
-		}
-
-		return res
+		return CI_SUCCESS_CHANNEL
 	}
+	return CI_FAILURE_CHANNEL
+}
+
+func topic() string {
 
 	res := os.Getenv("TOPIC_DEV_CHAT")
 	if res == "" {
