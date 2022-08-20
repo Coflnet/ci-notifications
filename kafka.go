@@ -34,6 +34,7 @@ func writeMessage(c *Config) error {
 	if err != nil {
 		return err
 	}
+	log.Info().Msgf("send message with content %s to topic %s", string(data), topic())
 
 	m := kafka.Message{
 		Key:   []byte(key),
@@ -71,7 +72,7 @@ func writer() (*kafka.Writer, error) {
 	return w, nil
 }
 
-func message(c *Config) *Message {
+func message(c *Config) Message {
 
 	prefix := "[SUCCESS]"
 	if !pipelineSuccessful() {
@@ -80,7 +81,7 @@ func message(c *Config) *Message {
 
 	text := fmt.Sprintf("%s %s/%s updated", prefix, c.Project, c.Organization)
 
-	m := &Message{
+	m := Message{
 		Message: text,
 		Channel: channel(),
 	}
