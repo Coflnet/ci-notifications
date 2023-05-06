@@ -44,7 +44,6 @@ func writeMessage(c *Config) error {
 	m := kafka.Message{
 		Key:   []byte(key),
 		Value: data,
-		Topic: topic(),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -96,7 +95,7 @@ func writer() (*kafka.Writer, error) {
 
 	writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{KafkaHost()},
-		Topic:   t,
+		Topic:   topic(),
 		Dialer:  dialer,
 	})
 
