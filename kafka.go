@@ -58,11 +58,6 @@ func writeMessage(c *Config) error {
 }
 
 func writer() (*kafka.Writer, error) {
-	kHosts := os.Getenv("KAFKA_HOST")
-	if kHosts == "" {
-		return nil, fmt.Errorf("KAFKA_HOST env var is not set")
-	}
-
 	t := os.Getenv("TOPIC_DEV_CHAT")
 	if t == "" {
 		return nil, fmt.Errorf("TOPIC_DEV_CHAT env var is not set")
