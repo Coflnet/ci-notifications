@@ -57,11 +57,6 @@ func writeMessage(c *Config) error {
 }
 
 func writer() (*kafka.Writer, error) {
-	t := os.Getenv("TOPIC_DEV_CHAT")
-	if t == "" {
-		return nil, fmt.Errorf("TOPIC_DEV_CHAT env var is not set")
-	}
-
 	clientCertPool := x509.NewCertPool()
 	ca, err := ioutil.ReadFile(KafkaCA())
 
@@ -93,6 +88,7 @@ func writer() (*kafka.Writer, error) {
 		},
 	}
 
+	slog.Info(fmt.Sprintf("creating kafka writer with host %s, topic %s, tls %s %s %s", KafkaHost(), topic(), KafkaCA(), KafkaCert(), KafkaKey()))
 	writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{KafkaHost()},
 		Topic:   topic(),
