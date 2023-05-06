@@ -2,13 +2,18 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/rs/zerolog/log"
-	"github.com/segmentio/kafka-go"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/scram"
+	"golang.org/x/exp/slog"
 )
 
 type Message struct {
@@ -34,7 +39,7 @@ func writeMessage(c *Config) error {
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("send message with content %s to topic %s", string(data), topic())
+	slog.Info(fmt.Sprintf("send message with content %s to topic %s", string(data), topic()))
 
 	m := kafka.Message{
 		Key:   []byte(key),
@@ -63,13 +68,44 @@ func writer() (*kafka.Writer, error) {
 		return nil, fmt.Errorf("TOPIC_DEV_CHAT env var is not set")
 	}
 
-	w := &kafka.Writer{
-		Addr:                   kafka.TCP(kHosts),
-		Topic:                  os.Getenv(t),
-		AllowAutoTopicCreation: true,
+	clientCertPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile(KafkaCA())
+
+	if err != nil {
+		slog.Error("error reading ca cert", err)
+		return nil, err
 	}
 
-	return w, nil
+	if ok := clientCertPool.AppendCertsFromPEM(ca); !ok {
+		slog.Warn("error appending certs from pem")
+	}
+
+	mechanism, err := scram.Mechanism(scram.SHA512, KafkaUser(), KafkaPassword())
+	if err != nil {
+		slog.Error("error creating scram mechanism", err)
+		return nil, err
+	}
+
+	cert, _ := tls.LoadX509KeyPair(KafkaCert(), KafkaKey())
+
+	dialer := &kafka.Dialer{
+		Timeout:       10 * time.Second,
+		DualStack:     true,
+		SASLMechanism: mechanism,
+		TLS: &tls.Config{
+			ClientCAs:          clientCertPool,
+			InsecureSkipVerify: true,
+			Certificates:       []tls.Certificate{cert},
+		},
+	}
+
+	writer := kafka.NewWriter(kafka.WriterConfig{
+		Brokers: []string{KafkaHost()},
+		Topic:   t,
+		Dialer:  dialer,
+	})
+
+	return writer, nil
 }
 
 func message(c *Config) Message {
@@ -100,7 +136,7 @@ func topic() string {
 
 	res := os.Getenv("TOPIC_DEV_CHAT")
 	if res == "" {
-		log.Panic().Msgf("TOPIC_DEV_SPAM_CHAT env var is not set")
+		panic("TOPIC_DEV_SPAM_CHAT env var is not set")
 	}
 
 	return res
@@ -109,14 +145,48 @@ func topic() string {
 func pipelineSuccessful() bool {
 	s := os.Getenv("SUCCESS")
 	if s == "" {
-		log.Panic().Msgf("SUCCESS env var is not set")
+		panic("SUCCESS env var is not set")
 	}
 
 	success, err := strconv.ParseBool(s)
 
 	if err != nil {
-		log.Panic().Err(err).Msgf("SUCCESS env var is not a boolean")
+		slog.Error("can not parse SUCCESS env var", err)
+		panic("SUCCESS env var is not a boolean")
 	}
 
 	return success
+}
+
+func Env(key string) string {
+	res := os.Getenv(key)
+	if res == "" {
+		panic(fmt.Sprintf("%s env var is not set", key))
+	}
+
+	return res
+}
+
+func KafkaHost() string {
+	return Env("KAFKA_BROKERS")
+}
+
+func KafkaCA() string {
+	return Env("KAFKA_TLS_CA_LOCATION")
+}
+
+func KafkaCert() string {
+	return Env("KAFKA_TLS_CERTIFICATE_LOCATION")
+}
+
+func KafkaKey() string {
+	return Env("KAFKA_TLS_KEY_LOCATION")
+}
+
+func KafkaUser() string {
+	return Env("KAFKA_USERNAME")
+}
+
+func KafkaPassword() string {
+	return Env("KAFKA_PASSWORD")
 }

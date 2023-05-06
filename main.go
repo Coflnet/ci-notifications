@@ -1,17 +1,21 @@
 package main
 
-import "github.com/rs/zerolog/log"
+import (
+	"golang.org/x/exp/slog"
+)
 
 func main() {
 	config, err := ReadConfig()
 	if err != nil {
-		log.Panic().Err(err).Msgf("there was problem when reading config, stop execution")
+		slog.Error("there was problem when reading config, stop execution", err)
+		panic(err)
 	}
 
 	err = writeMessage(config)
 	if err != nil {
-		log.Panic().Err(err).Msgf("there was problem when writing message, stop execution")
+		slog.Error("there was problem when writing message, stop execution", err)
+		panic(err)
 	}
 
-	log.Info().Msg("finished")
+	slog.Info("finished")
 }
