@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/segmentio/kafka-go v0.4.40
-	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
+	golang.org/x/exp v0.0.0-20230420155640-133eef4313cb
 )
 
 require (
