@@ -69,7 +69,7 @@ func writer() (*kafka.Writer, error) {
 		slog.Warn("error appending certs from pem")
 	}
 
-	mechanism, err := scram.Mechanism(scram.SHA512, KafkaUser(), KafkaPassword())
+	mechanism, err := scram.Mechanism(scram.SHA256, KafkaUser(), KafkaPassword())
 	if err != nil {
 		slog.Error("error creating scram mechanism", err)
 		return nil, err
