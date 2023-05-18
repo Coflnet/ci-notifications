@@ -94,6 +94,7 @@ func writer() (*kafka.Writer, error) {
 		Topic:   topic(),
 		Dialer:  dialer,
 	})
+	writer.AllowAutoTopicCreation = true
 
 	return writer, nil
 }
